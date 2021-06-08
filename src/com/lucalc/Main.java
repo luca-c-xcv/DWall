@@ -1,13 +1,8 @@
 package com.lucalc;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -16,6 +11,31 @@ public class Main
     {
         private static String filepath = System.getProperty( "user.home" ) + "/";
         private static String filename = "customWallpaper.jpg";
+
+        private static Boolean checkConnection( ) throws IOException
+            {
+                ArrayList<String> pingCom = new ArrayList<String>(  );
+                pingCom.add( "ping" );
+                pingCom.add( "1.1.1.1" );
+                ProcessBuilder builder = new ProcessBuilder( pingCom );
+                Process proc = builder.start( );
+                BufferedReader input = new BufferedReader( new InputStreamReader( proc.getInputStream() ) );
+                BufferedReader error = new BufferedReader( new InputStreamReader( proc.getErrorStream() ) );
+
+
+                if( input.readLine() != null )
+                    {
+                        return true;
+                    }
+
+                if( error.readLine() != null )
+                    {
+                        return false;
+                    }
+
+                return false;
+            }
+
 
         public static String getResolution( )
             {
@@ -34,7 +54,7 @@ public class Main
                 return sc.nextLine();
             }
 
-        public static void main( String[] args )
+        public static void engine( String[] args )
             {
                 imgURL urlimage = new imgURL( "https://source.unsplash.com" );
                 boolean res = false, cats = false;
@@ -66,6 +86,19 @@ public class Main
                                             }
                                     }
                             }
+                    }
+
+                try
+                    {
+                        if( !checkConnection( ) )
+                            {
+                                System.out.println( "Connection problem" );
+                                System.exit( 1 );
+                            }
+                    }
+                catch( IOException e )
+                    {
+                        e.printStackTrace( );
                     }
 
                 if( !res  )

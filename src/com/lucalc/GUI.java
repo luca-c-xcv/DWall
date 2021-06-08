@@ -69,7 +69,7 @@ public class GUI extends JDialog
         res = textField1.getText();
         cats = textField2.getText();
         String[] tomain = new String[]{ "-res", res, "-cats", cats };
-        Main.main( tomain );
+        Main.engine( tomain );
         // add your code here
         dispose( );
       }
@@ -88,7 +88,7 @@ public class GUI extends JDialog
               {
                 if( arg.equals( "-nw" ) )
                   {
-                    Main.main( args );
+                    Main.engine( args );
                   }
               }
           }
