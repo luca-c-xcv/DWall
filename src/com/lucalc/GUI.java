@@ -3,10 +3,11 @@ package com.lucalc;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.*;
 
 
 
-public class GUI extends JDialog
+public class GUI extends JFrame
   {
 
     private JPanel contentPane;
@@ -15,14 +16,32 @@ public class GUI extends JDialog
     private JTextField textField1;
     private JTextField textField2;
     private JLabel restex;
+    private JPanel vars;
+    private JPanel wait;
+    private JLabel message;
     private String cats;
     private String res;
+    private JLabel error;
+    private Future<ErrorCode> returnEngine = null;
 
     public GUI( )
       {
+        JFrame frame = new JFrame(  );
+        frame.add( contentPane );
+        frame.setVisible( true );
+        frame.setTitle( "DWall" );
+        frame.setDefaultCloseOperation( EXIT_ON_CLOSE );
+        setLocationRelativeTo(null);
+
         setContentPane( contentPane );
-        setModal( true );
         getRootPane( ).setDefaultButton( buttonOK );
+
+        contentPane.setBackground( Color.DARK_GRAY );
+        textField1.setCaretColor( Color.WHITE );
+        textField2.setCaretColor( Color.WHITE );
+        textField1.setMargin(new Insets(10, 10, 10, 10));
+        textField2.setMargin(new Insets(10, 10, 10, 10));
+
 
         buttonOK.addActionListener( new ActionListener( )
           {
@@ -30,6 +49,7 @@ public class GUI extends JDialog
               {
                 onOK( );
               }
+
           } );
 
         buttonCancel.addActionListener( new ActionListener( )
@@ -66,18 +86,79 @@ public class GUI extends JDialog
 
     private void onOK( )
       {
+        onWait();
+        repaint();
+        printAll(getGraphics());
+
         res = textField1.getText();
         cats = textField2.getText();
+        if( res == null || cats == null )
+          {
+           return;
+          }
         String[] tomain = new String[]{ "-res", res, "-cats", cats };
-        Main.engine( tomain );
-        // add your code here
-        dispose( );
+        Callable<ErrorCode> engine = new Callable <ErrorCode>( )
+          {
+            @Override
+            public ErrorCode call( ) throws Exception
+              {
+                ErrorCode ret = Main.engine( tomain );
+                return ret;
+              }
+          };
+
+        ExecutorService service =  Executors.newSingleThreadExecutor();
+        returnEngine = service.submit( engine );
+
+        ErrorCode onExit = null;
+        try
+          {
+            onExit = returnEngine.get();
+          }
+        catch( InterruptedException | ExecutionException e )
+          {
+            e.printStackTrace( );
+          }
+        message.setFont( new Font( message.getFont().toString() ,Font.PLAIN, 22 )  );
+
+        if( onExit == ErrorCode.END )
+          {
+            message.setText( "DONE" );
+            repaint();
+            printAll(getGraphics());
+            try
+              {
+                Thread.sleep( 1000 );
+              }
+            catch( InterruptedException e )
+              {
+                e.printStackTrace( );
+              }
+            System.exit( 0 );
+          }
+        else
+          {
+            message.setForeground( Color.RED );
+            message.setText( "An error occurred!" );
+            error.setText( onExit.name() );
+            wait.add( error );
+          }
       }
 
     private void onCancel( )
       {
-        // add your code here if necessary
-        dispose( );
+        System.exit( 0 );
+      }
+
+    private void initGui( )
+      {
+        vars.setVisible( true );
+        wait.setVisible( false );
+      }
+    private void onWait( )
+      {
+        vars.setVisible( false );
+        wait.setVisible( true );
       }
 
     public static void main( String[] args )
@@ -95,9 +176,10 @@ public class GUI extends JDialog
         else
           {
             GUI dialog = new GUI( );
+            dialog.initGui( );
             dialog.pack( );
             dialog.setVisible( true );
-            System.exit( 0 );
+            dialog.setDefaultCloseOperation( EXIT_ON_CLOSE );
           }
       }
 

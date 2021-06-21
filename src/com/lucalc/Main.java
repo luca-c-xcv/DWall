@@ -2,7 +2,7 @@ package com.lucalc;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
+import java.net.Socket;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -12,25 +12,23 @@ public class Main
         private static String filepath = System.getProperty( "user.home" ) + "/";
         private static String filename = "customWallpaper.jpg";
 
-        private static Boolean checkConnection( ) throws IOException
+        private static Boolean checkConnection( )
             {
-                ArrayList<String> pingCom = new ArrayList<String>(  );
-                pingCom.add( "ping" );
-                pingCom.add( "1.1.1.1" );
-                ProcessBuilder builder = new ProcessBuilder( pingCom );
-                Process proc = builder.start( );
-                BufferedReader input = new BufferedReader( new InputStreamReader( proc.getInputStream() ) );
-                BufferedReader error = new BufferedReader( new InputStreamReader( proc.getErrorStream() ) );
+                String[] IPs = {"8.8.8.8","1.1.1.1","208.67.222.222"};
 
-
-                if( input.readLine() != null )
+                for( String ip : IPs )
                     {
-                        return true;
-                    }
-
-                if( error.readLine() != null )
-                    {
-                        return false;
+                        Socket socket = null;
+                        try
+                            {
+                                socket = new Socket( ip, 53 );
+                                socket.close();
+                                return true;
+                            }
+                        catch( IOException e )
+                            {
+                                continue;
+                            }
                     }
 
                 return false;
@@ -54,7 +52,7 @@ public class Main
                 return sc.nextLine();
             }
 
-        public static void engine( String[] args )
+        public static ErrorCode engine( String[] args )
             {
                 imgURL urlimage = new imgURL( "https://source.unsplash.com" );
                 boolean res = false, cats = false;
@@ -82,24 +80,19 @@ public class Main
                                         else
                                             {
                                                 System.err.println( "Invalid argument " + args[arg] );
-                                                System.exit( -1 );
+                                                return ErrorCode.ARGUMENT_UNKNOWN;
                                             }
                                     }
                             }
                     }
 
-                try
+
+                if( !checkConnection( ) )
                     {
-                        if( !checkConnection( ) )
-                            {
-                                System.out.println( "Connection problem" );
-                                System.exit( 1 );
-                            }
+                        System.out.println( "Connection problem" );
+                        return ErrorCode.NO_CONNECTION;
                     }
-                catch( IOException e )
-                    {
-                        e.printStackTrace( );
-                    }
+
 
                 if( !res  )
                     urlimage.setResolution( getResolution( ) );
@@ -121,7 +114,7 @@ public class Main
                             }
                         catch( IOException e )
                             {
-                                e.printStackTrace( );
+                                return ErrorCode.PROBLEM_WITH_IMAGE;
                             }
 
                     }
@@ -137,7 +130,7 @@ public class Main
                             }
                         catch( IOException e )
                             {
-                                e.printStackTrace( );
+                                return ErrorCode.PROBLEM_WITH_IMAGE;
                             }
                     }
                 else if( OS.contains( "mac" ) )
@@ -152,13 +145,14 @@ public class Main
                             }
                         catch( IOException e )
                             {
-                                e.printStackTrace( );
+                                return ErrorCode.PROBLEM_WITH_IMAGE;
                             }
                     }
                 else
                     {
-                        System.err.println( "Operating System not supported!" );
-                        System.exit( -1 );
+                        return ErrorCode.WRONG_OS;
                     }
+
+                return ErrorCode.END;
             }
     }
